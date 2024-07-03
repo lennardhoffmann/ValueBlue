@@ -20,6 +20,11 @@ namespace VB.API.Logic
         {
             var filmRequestRecord = _mapper.Map<FilmRequest>(requiredProperties);
             var result = await _repository.AddSearchRequestAsync(filmRequestRecord);
+            if (result && result != null)
+            {
+                return;
+            }
+            throw new Exception("Could not add record");
         }
 
         public async Task<List<FilmRequest>> GetAllFilmRequests()
@@ -69,7 +74,7 @@ namespace VB.API.Logic
             var result = await _repository.DeleteSearchRequestBtSearchTokenAsync(filmName);
             if (!result)
             {
-                throw new Exception("Record couldnot be deleted");
+                throw new Exception("Record could not be deleted");
             }
         }
     }

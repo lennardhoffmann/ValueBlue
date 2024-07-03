@@ -23,14 +23,14 @@ namespace VB.API.Controllers
 
         // GET api/<SearchController>/SomeFilm
         [HttpGet("{filmTitle}")]
-        public async Task<IActionResult> GetAsync(string filmTitle)
+        public async Task<IActionResult> GetFilmData(string filmTitle)
         {
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
             var defaultFilmServiceProvider = _configuration.GetSection("DefaultFilmServiceProvider").Value;
             var filmProviderProperties = _configuration.GetSection("FilmServiceProviders").Get<List<FilmServiceProperties>>();
             var defaultFilmProviderProperties = (filmProviderProperties?.Find(x => x.ServiceName == defaultFilmServiceProvider)) ?? throw new Exception("No default film service provider options configured");
 
-            var filmService = new FilmQueryService(defaultFilmProviderProperties);
+            var filmService = new ExternalFilmQueryService(new HttpClient(), defaultFilmProviderProperties);
             var watch = System.Diagnostics.Stopwatch.StartNew();
             var filmDetails = await filmService.GetFilmByName(filmTitle) ?? throw new Exception();
             watch.Stop();
@@ -49,18 +49,6 @@ namespace VB.API.Controllers
 
             return Ok(filmDetails);
 
-        }
-
-        // PUT api/<SearchController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<SearchController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
         }
     }
 }

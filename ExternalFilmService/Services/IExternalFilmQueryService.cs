@@ -2,7 +2,7 @@
 
 namespace ExternalFilmService.Services
 {
-    public interface IFilmQueryService
+    public interface IExternalFilmQueryService
     {
          Task<FilmServiceResponse> GetFilmByName(string filmName);
     }

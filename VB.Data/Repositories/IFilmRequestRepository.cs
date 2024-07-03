@@ -12,6 +12,8 @@ namespace VB.Data.Repositories
 
         Task<List<FilmRequest>> GetSearchRequestByDateRangeAsync(DateTime startDate, DateTime endDate);
 
+        Task GetAggregateSearchDataForDateAsync(DateTime searchdate);
+
         Task<bool> DeleteSearchRequestBtSearchTokenAsync(string tokenName);
     }
 }

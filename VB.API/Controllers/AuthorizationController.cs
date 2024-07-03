@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using VB.API.Logic;
+using VB.API.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,26 +24,9 @@ namespace VB.API.Controllers
             AuthorizationService.ValidateAuthenticationNameParameter(configAdminName, adminName);
 
             var apiKey = _config.GetSection("ApiKey").Value;
+            var response = new ApiKeyResponse { ApiKey = apiKey };
 
-            return Ok(apiKey);
-        }
-
-        // POST api/<AuthorizationController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/<AuthorizationController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<AuthorizationController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            return Ok(response);
         }
     }
 }

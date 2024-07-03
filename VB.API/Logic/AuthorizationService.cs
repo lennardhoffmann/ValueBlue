@@ -5,7 +5,7 @@
 
         public static void ValidateAuthenticationNameParameter(string authUserName, string configuredAdminUserName)
         {
-            if (!string.Equals(authUserName.ToLower(), configuredAdminUserName.ToLower()))
+            if (!authUserName.ToLower().Equals(configuredAdminUserName.ToLower()))
             {
                 throw new BadHttpRequestException("Invalid auth username provided");
             }

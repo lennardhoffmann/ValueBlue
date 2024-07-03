@@ -13,6 +13,10 @@ namespace VB.API.Controllers
     public class AdminController : ControllerBase
     {
         private readonly RequestQueryService _queryService;
+
+        /// <summary>
+        ///The controller for retrieving and deleting film request records from the database.
+        /// </summary>
         public AdminController(RequestQueryService queryService)
         {
             _queryService = queryService;

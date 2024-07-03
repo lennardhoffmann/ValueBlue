@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ExternalFilmService\ExternalFilmService.csproj" />
+    <ProjectReference Include="..\ExternalFilmService\VB.ExternalFilmService.csproj" />
     <ProjectReference Include="..\VB.Data\VB.Data.csproj" />
   </ItemGroup>
 
