@@ -9,7 +9,7 @@ namespace VB.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[ApiKey]
+    [ApiKey]
     public class AdminController : ControllerBase
     {
         private readonly IDatabaseQueryService _queryService;
