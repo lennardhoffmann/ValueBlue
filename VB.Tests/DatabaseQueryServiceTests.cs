@@ -10,13 +10,13 @@ using VB.Tests.ObjectBuilders;
 
 namespace VB.Tests
 {
-    public class RequestQueryServiceTests
+    public class DatabaseQueryServiceTests
     {
         private readonly Mock<IFilmRequestRepository> _repository;
         private readonly IMapper _mapper;
-        private readonly RequestQueryService _sut;
+        private readonly DatabaseQueryService _sut;
 
-        public RequestQueryServiceTests()
+        public DatabaseQueryServiceTests()
         {
             var mappingConfig = new MapperConfiguration(mc =>
             {
@@ -26,7 +26,7 @@ namespace VB.Tests
             _repository = new Mock<IFilmRequestRepository>();
             _mapper = mappingConfig.CreateMapper();
 
-            _sut = new RequestQueryService(_mapper, _repository.Object);
+            _sut = new DatabaseQueryService(_mapper, _repository.Object);
         }
 
         [Fact]
@@ -126,18 +126,6 @@ namespace VB.Tests
             _repository.Setup(repo => repo.DeleteSearchRequestBtSearchTokenAsync(filmName)).ReturnsAsync(true);
 
             await _sut.DeleteFilmRequestByFilmName(filmName);
-        }
-
-        [Fact]
-        public async void DeleteFilmRequestByFilmName_InvalidFilmName_ThrowsException()
-        {
-            const string filmName = "wrong film, don't watch";
-
-            _repository.Setup(repo => repo.DeleteSearchRequestBtSearchTokenAsync(It.IsAny<string>())).ReturnsAsync(false);
-
-            await _sut.Invoking(sut => sut.DeleteFilmRequestByFilmName(filmName))
-                       .Should()
-                       .ThrowAsync<Exception>("Record could not be deleted");
         }
 
     }

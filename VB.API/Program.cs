@@ -1,8 +1,12 @@
+using ExternalFilmService.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
+using MongoDB.Driver;
 using System.Reflection;
 using VB.API;
 using VB.API.Authorization;
+using VB.API.Extensions;
 using VB.API.Infrastructure.ExceptionHandling;
 using VB.API.Logic;
 using VB.API.Models;
@@ -19,23 +23,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-builder.Services.AddDbContext<MongoDBContext>(options =>
-{
-    var mongoSettings = builder.Configuration.GetSection("MongoDbSettings").Get<MongoDbSettings>();
-    var connectionstring = mongoSettings.ConnectionString;
-    var database = mongoSettings.DatabaseName;
-    options.UseMongoDB(connectionstring, database);
-});
+builder.Services.AddMongoDatabase(builder.Configuration);
+builder.Services.AddRepository();
 
 builder.Services.AddTransient<IApiKeyValidation, ApiKeyValidation>();
 builder.Services.AddScoped<ApiKeyAuthFilter>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
-
-builder.Services.AddTransient<RequestQueryService>();
-
+builder.Services.AddTransient<IDatabaseQueryService, DatabaseQueryService>();
 builder.Services.AddTransient<IFilmRequestRepository, FilmRequestRepository>();
+builder.Services.AddHttpClient<ExternalFilmQueryService>();
 
 builder.Services.AddSwaggerGen(c =>
 {

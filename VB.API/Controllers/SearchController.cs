@@ -14,14 +14,17 @@ namespace VB.API.Controllers
     {
 
         private readonly IConfiguration _configuration;
-        private readonly RequestQueryService _queryService;
-        public SearchController(IConfiguration configuration, RequestQueryService queryService)
+        private readonly IDatabaseQueryService _queryService;
+        public SearchController(IConfiguration configuration, IDatabaseQueryService queryService)
         {
             _configuration = configuration;
             _queryService = queryService;
         }
 
-        // GET api/<SearchController>/SomeFilm
+        /// <summary>
+        /// Retrieves data of a specific movie name from the external service.
+        /// </summary>
+        /// <param name="filmTitle">The name of the film to retrieve data for from the external service</param>
         [HttpGet("{filmTitle}")]
         public async Task<IActionResult> GetFilmData(string filmTitle)
         {
@@ -42,7 +45,6 @@ namespace VB.API.Controllers
                 ImdbID = filmDetails.imdbID,
                 UserIpAddress = ipAddress,
                 TimeStamp = DateTime.Now
-
             };
 
             await _queryService.AddSearchRequestRecord(requestRequiredProperties);

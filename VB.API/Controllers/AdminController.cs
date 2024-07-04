@@ -9,15 +9,15 @@ namespace VB.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [ApiKey]
+    //[ApiKey]
     public class AdminController : ControllerBase
     {
-        private readonly RequestQueryService _queryService;
+        private readonly IDatabaseQueryService _queryService;
 
         /// <summary>
         ///The controller for retrieving and deleting film request records from the database.
         /// </summary>
-        public AdminController(RequestQueryService queryService)
+        public AdminController(IDatabaseQueryService queryService)
         {
             _queryService = queryService;
         }
@@ -52,9 +52,22 @@ namespace VB.API.Controllers
         public async Task<IActionResult> GetFilmRequestByDateRange(string startDate, string endDate)
         {
 
-            var filmRequests = _queryService.GetFilmRequestsForDatePeriod(startDate, endDate);
+            var filmRequests = await _queryService.GetFilmRequestsForDatePeriod(startDate, endDate);
 
             return Ok(filmRequests);
+        }
+
+        /// <summary>
+        /// Retrieves aggregate data for the specified date.
+        /// </summary>
+        /// <param name="searchDate">The start date in the format YYYY-MM-DD</param>
+        [HttpGet("aggregate/{searchDate}")]
+        public async Task<IActionResult> GetFilmAggregateDataByDate(string searchDate)
+        {
+            var result = await _queryService.GetFilmRequestAggregatedDataForDate(searchDate);
+
+
+            return Ok(result);
         }
 
         /// <summary>

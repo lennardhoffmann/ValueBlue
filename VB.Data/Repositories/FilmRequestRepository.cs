@@ -1,88 +1,113 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using VB.Data.Models;
 
 namespace VB.Data.Repositories
 {
     public class FilmRequestRepository : IFilmRequestRepository
     {
-        private readonly MongoDBContext _context;
-        public FilmRequestRepository(MongoDBContext context)
+        private readonly IMongoCollection<FilmRequest> _collection;
+        public FilmRequestRepository(IMongoDatabase mongoDatabase)
         {
-            _context = context;
+            _collection = mongoDatabase.GetCollection<FilmRequest>(nameof(FilmRequest));
         }
 
         public async Task<bool> AddSearchRequestAsync(FilmRequest requestRecord)
         {
-            await _context.FilmRequests.AddAsync(requestRecord);
-            await _context.SaveChangesAsync();
+            await _collection.InsertOneAsync(requestRecord);
 
             return true;
         }
 
         public async Task<List<FilmRequest>> GetAllSearchRequestsAsync()
         {
-            var filmRequests = await _context.FilmRequests.ToListAsync();
+            var filmRequests = await _collection.Find(Builders<FilmRequest>.Filter.Empty).ToListAsync();
 
             return filmRequests;
         }
 
         public async Task<FilmRequest> GetSearchRequestBySearchTokenAsync(string tokenName)
         {
-            var filmRequest = await _context.FilmRequests.Where(x => x.Search_Token.ToLower() == tokenName.ToLower()).FirstOrDefaultAsync();
+            var filmRequest = await _collection.Find(x => x.Search_Token.ToLower() == tokenName.ToLower()).FirstOrDefaultAsync();
             return filmRequest;
         }
 
         public async Task<List<FilmRequest>> GetSearchRequestByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
-            var filmRequests = await _context.FilmRequests.Where(x => x.TimeStamp.Date >= startDate.Date && x.TimeStamp.Date <= endDate.Date).ToListAsync();
+            var filter = Builders<FilmRequest>.Filter.Gte(x => x.TimeStamp, startDate) &
+                         Builders<FilmRequest>.Filter.Lt(x => x.TimeStamp, endDate.AddDays(1));
 
+            var filmRequests = await _collection.Find(filter).ToListAsync();
             return filmRequests;
         }
 
-        public async Task GetAggregateSearchDataForDateAsync(DateTime searchdate)
+        public async Task<FilmRequestAggregateResponse> GetAggregateSearchDataForDateAsync(DateTime searchDate)
         {
+            // Construct the filter for the aggregation pipeline
+            var filter = Builders<FilmRequest>.Filter.Gt(x => x.TimeStamp, searchDate.ToUniversalTime().Date) &
+                         Builders<FilmRequest>.Filter.Lte(x => x.TimeStamp, searchDate.ToUniversalTime().Date.AddDays(2));
 
-            //    var filter = Builders<FilmSearch>.Filter.Gte(f => f.TimeStamp, specificDate.Date) &
-            //            Builders<FilmSearch>.Filter.Lt(f => f.TimeStamp, specificDate.Date.AddDays(1));
+            var filterDoc = filter.Render(BsonSerializer.SerializerRegistry.GetSerializer<FilmRequest>(), BsonSerializer.SerializerRegistry);
 
-            //    var group = new BsonDocument
-            //{
-            //    { "_id", "$search_Token" },
-            //    { "count", new BsonDocument("$sum", 1) },
-            //    { "averageProcessingTime", new BsonDocument("$avg", "$processing_Time_Ms") }
-            //};
+            // Match stage for aggregation pipeline
+            var matchStage = new BsonDocument("$match", filterDoc);
 
-            //    var sort = new BsonDocument("count", -1);
+            // Group stage to count occurrences of each Search_Token
+            var groupStage = new BsonDocument
+            {
+                { "$group", new BsonDocument
+                    {
+                        { "_id", "$search_Token" },  // Group by movie title
+                        { "count", new BsonDocument("$sum", 1) }  // Count occurrences of each movie title
+                    }
+                }
+            };
 
-            //    var pipeline = new BsonDocument[]
-            //    {
-            //    new BsonDocument("$match", filter),
-            //    new BsonDocument("$group", group),
-            //    new BsonDocument("$sort", sort)
-            //    };
+            // Aggregation pipeline
+            var pipeline = new[] { matchStage, groupStage };
 
-            //    var result = await _filmSearchCollection.AggregateAsync<BsonDocument>(pipeline).ToListAsync();
+            // Log the pipeline to inspect before execution (optional)
+            Console.WriteLine($"Aggregation Pipeline: {pipeline.ToJson()}");
 
-            return;
+            try
+            {
+                // Execute aggregation
+                var cursor = await _collection.AggregateAsync<BsonDocument>(pipeline);
+                var results = await cursor.ToListAsync();
+
+                // Log the results count
+                Console.WriteLine($"Aggregation Results Count: {results.Count}");
+
+                // Convert the aggregation results to a dictionary
+                var mostFrequentSearchTokens = results.ToDictionary(
+                    doc => doc["_id"].AsString,
+                    doc => doc["count"].AsInt32
+                );
+
+                // Retrieve films for the specified date
+                var filmsForDate = await _collection.Find(filter).ToListAsync();
+
+                var aggregateResult = new FilmRequestAggregateResponse
+                {
+                    TotalRequests = filmsForDate.Count, // Use the count from the Find operation
+                    MostFrequentSearchTokens = mostFrequentSearchTokens
+                };
+
+                return aggregateResult;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing aggregation pipeline: {ex.Message}");
+                throw; // Rethrow or handle the exception as appropriate
+            }
         }
 
         public async Task<bool> DeleteSearchRequestBtSearchTokenAsync(string tokenName)
         {
-            var filmRequest = await _context.FilmRequests.Where(x => x.Search_Token.ToLower().Equals(tokenName.ToLower())).FirstOrDefaultAsync();
-            if (filmRequest == null)
-            {
-                return false;
-            }
-
-            _context.FilmRequests.Remove(filmRequest);
-            await _context.SaveChangesAsync();
+            await _collection.DeleteOneAsync(x => x.Search_Token.ToLower() == tokenName.ToLower());
 
             return true;
 
@@ -90,4 +115,10 @@ namespace VB.Data.Repositories
 
 
     }
+}
+
+public class SearchTokenCount
+{
+    public string Search_Token { get; set; }
+    public int Count { get; set; }
 }

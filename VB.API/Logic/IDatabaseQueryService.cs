@@ -3,7 +3,7 @@ using VB.Data.Models;
 
 namespace VB.API.Logic
 {
-    public interface IRequestQueryService
+    public interface IDatabaseQueryService
     {
         Task AddSearchRequestRecord(RequestProperties requiredProperties);
 
@@ -12,6 +12,8 @@ namespace VB.API.Logic
         Task<FilmRequest> GetFilmRequestByFilmName(string filmName);
 
         Task<List<FilmRequest>> GetFilmRequestsForDatePeriod(string startDate, string endDate);
+
+        Task<FilmRequestAggregateResponse> GetFilmRequestAggregatedDataForDate(string searchDate);
 
         Task DeleteFilmRequestByFilmName(string filmName);
     }

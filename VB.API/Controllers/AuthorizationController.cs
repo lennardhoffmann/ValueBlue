@@ -16,7 +16,10 @@ namespace VB.API.Controllers
             _config = config;
         }
 
-        // GET api/<AuthorizationController>/5
+        /// <summary>
+        /// Retrieves an api key to authorize requests.
+        /// </summary>
+        /// <param name="adminName">The name of administrator for which to retrieve an API key</param>
         [HttpGet("{adminName}")]
         public IActionResult GetApiKey(string adminName)
         {

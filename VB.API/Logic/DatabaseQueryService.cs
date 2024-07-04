@@ -6,11 +6,11 @@ using VB.Data.Repositories;
 
 namespace VB.API.Logic
 {
-    public class RequestQueryService : IRequestQueryService
+    public class DatabaseQueryService : IDatabaseQueryService
     {
         private readonly IMapper _mapper;
         private readonly IFilmRequestRepository _repository;
-        public RequestQueryService(IMapper mapper, IFilmRequestRepository repository)
+        public DatabaseQueryService(IMapper mapper, IFilmRequestRepository repository)
         {
             _mapper = mapper;
             _repository = repository;
@@ -61,10 +61,25 @@ namespace VB.API.Logic
             }
 
             var result = await _repository.GetSearchRequestByDateRangeAsync(periodStartDate, periodEndDate);
-            if (result == null)
+
+            return result;
+        }
+
+        public async Task<FilmRequestAggregateResponse> GetFilmRequestAggregatedDataForDate(string searchDate)
+        {
+            DateTime aggregateDate;
+            bool successDate = DateTime.TryParseExact(searchDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out aggregateDate);
+            if (!successDate)
             {
-                throw new Exception();
+                throw new BadHttpRequestException("Invalid format for date provided");
             }
+
+            if (aggregateDate.Kind != DateTimeKind.Utc)
+            {
+                aggregateDate = aggregateDate.ToUniversalTime();
+            }
+
+            var result = await _repository.GetAggregateSearchDataForDateAsync(aggregateDate);
 
             return result;
         }

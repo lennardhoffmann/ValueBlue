@@ -1,4 +1,5 @@
-﻿using VB.Data.Models;
+﻿using MongoDB.Bson;
+using VB.Data.Models;
 
 namespace VB.Data.Repositories
 {
@@ -12,7 +13,7 @@ namespace VB.Data.Repositories
 
         Task<List<FilmRequest>> GetSearchRequestByDateRangeAsync(DateTime startDate, DateTime endDate);
 
-        Task GetAggregateSearchDataForDateAsync(DateTime searchdate);
+        Task<FilmRequestAggregateResponse> GetAggregateSearchDataForDateAsync(DateTime searchDate);
 
         Task<bool> DeleteSearchRequestBtSearchTokenAsync(string tokenName);
     }
